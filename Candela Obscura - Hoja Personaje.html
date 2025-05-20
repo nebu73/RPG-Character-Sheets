@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Generador de Personajes - Candela Obscura</title>
+  <link rel="icon" type="image/png" href="/mnt/data/960x0.png">
+  <link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Cinzel', serif;
+      background-image: url('https://www.transparenttextures.com/patterns/old-map.png');
+      background-color: #f5f0dc;
+      color: #3a2f1d;
+      background-size: 400px 400px;
+    }
+    .card {
+      background-color: rgba(255, 248, 220, 0.9);
+      border: 2px solid #b08b4f;
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      box-shadow: 4px 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    input, textarea, select {
+      color: #3a2f1d;
+      background-color: #fdf6e3;
+      border: 1px solid #b08b4f;
+    }
+    input:focus, textarea:focus, select:focus {
+      outline: none;
+      box-shadow: 0 0 0 2px #d4af37;
+    }
+    .logo {
+      max-width: 300px;
+      margin: 0 auto 1.5rem;
+      display: block;
+    }
+    h1, h2 {
+      font-family: 'Special Elite', cursive;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+    }
+    .list-disc li::marker {
+      color: #b08b4f;
+    }
+    .preview-label {
+      font-weight: bold;
+      color: #5c4b2c;
+    }
+    .hidden { display: none; }
+  </style>
+</head>
+<body class="p-6">
+  <div class="max-w-4xl mx-auto">
+    <img src="/mnt/data/960x0.png" alt="Candela Obscura Logo" class="logo">
+    <h1 class="text-4xl mb-6 text-center text-yellow-700">Generador de Personajes</h1>
+
+    <form onsubmit="return validarFormulario(event)">
+      <div class="card">
+        <h2 class="text-2xl mb-4">Información del Personaje</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label for="nombre" class="block">Nombre:<span class="text-red-500">*</span></label>
+            <input type="text" id="nombre" class="w-full p-2 rounded" required oninput="updatePreview()">
+          </div>
+          <div>
+            <label for="circulo" class="block">Círculo:<span class="text-red-500">*</span></label>
+            <input type="text" id="circulo" class="w-full p-2 rounded" required oninput="updatePreview()">
+          </div>
+          <div>
+            <label for="estilo" class="block">Estilo:<span class="text-red-500">*</span></label>
+            <input type="text" id="estilo" class="w-full p-2 rounded" required oninput="updatePreview()">
+          </div>
+        </div>
+        <div class="mt-4">
+          <label for="catalizador" class="block">Catalizador:<span class="text-red-500">*</span></label>
+          <textarea id="catalizador" class="w-full p-2 rounded" rows="2" required oninput="updatePreview()"></textarea>
+        </div>
+        <div class="mt-4">
+          <label for="cuestion" class="block">Cuestión:<span class="text-red-500">*</span></label>
+          <textarea id="cuestion" class="w-full p-2 rounded" rows="2" required oninput="updatePreview()"></textarea>
+        </div>
+        <div class="mt-4">
+          <label for="rol" class="block">Rol:<span class="text-red-500">*</span></label>
+          <select id="rol" name="rol" class="w-full p-2 border rounded" onchange="mostrarDetallesRol(); updatePreview();">
+            <option value="">Seleccionar</option>
+            <option value="cara">CARA</option>
+            <option value="musculo">MÚSCULO</option>
+            <option value="erudito">ERUDITO</option>
+            <option value="escurridizo">ESCURRIDIZO</option>
+            <option value="raro">RARO</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="detalle-rol" class="card hidden">
+        <h2 class="text-xl mb-2">Detalles del Rol</h2>
+        <div id="contenido-clases"></div>
+      </div>
+
+      <div class="card">
+        <h2 class="text-2xl mb-4">Equipamiento (máximo 6)</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2" id="equipamiento"></div>
+      </div>
+
+      <div class="card">
+        <h2 class="text-2xl mb-4">Vista Previa de la Ficha</h2>
+        <div class="space-y-2">
+          <p><span class="preview-label">Nombre:</span> <span id="preview-nombre"></span></p>
+          <p><span class="preview-label">Círculo:</span> <span id="preview-circulo"></span></p>
+          <p><span class="preview-label">Estilo:</span> <span id="preview-estilo"></span></p>
+          <p><span class="preview-label">Rol:</span> <span id="preview-rol"></span></p>
+          <p><span class="preview-label">Subclase:</span> <span id="preview-subclase"></span></p>
+          <p><span class="preview-label">Catalizador:</span> <span id="preview-catalizador"></span></p>
+          <p><span class="preview-label">Cuestión:</span> <span id="preview-cuestion"></span></p>
+          <p><span class="preview-label">Equipamiento:</span> <span id="preview-equipamiento"></span></p>
+        </div>
+      </div>
+      
+      <div class="flex justify-center mt-4">
+        <button type="submit" class="bg-yellow-700 hover:bg-yellow-800 text-white font-bold py-2 px-6 rounded">
+          Generar Ficha Completa
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    // Datos de clases y subclases
+    const clases = {
+      cara: {
+        nombre: "CARA",
+        habilidades: [
+          "<strong>Conozco a un tipo:</strong> Una vez por misión, pregunta al GM a quién conoces cerca que pueda ayudarte...",
+          "<strong>Engatusar:</strong> Sabes cómo trabajar en la sala...",
+          "<strong>Tranquilidad bajo presión:</strong> En cualquier tirada, puedes gastar Astucia..."
+        ],
+        subclases: {
+          periodista: {
+            nombre: "Periodista",
+            habilidades: [
+              "<strong>Acceso a información privilegiada:</strong> Una vez por asignación...",
+              "<strong>Libro abierto:</strong> Cuando intentas conectar...",
+              "<strong>Detector de mentiras:</strong> Cuando haces una tirada de Leer...",
+              "<strong>Conferencia de prensa:</strong> Puedes gastar 1 Astucia...",
+              "<strong>En las trincheras:</strong> Has hecho suficientes trabajos peligrosos...",
+              "<strong>Bien Investigado:</strong> Puedes gastar 1 Intuición..."
+            ],
+            iluminacion: "Recoger declaraciones / Cazar una pista / Decir la verdad al poder"
+          },
+          mago: {
+            nombre: "Mago",
+            habilidades: [
+              "<strong>Despiste:</strong> Cuando usas tus palabras o acciones...",
+              "<strong>Artista del Escape:</strong> Gasta 1 Nervio para escapar automáticamente...",
+              "<strong>Patrón Practicado:</strong> Has ensayado durante mucho tiempo...",
+              "<strong>Ojo Asombroso:</strong> Puedes gastar 1 de Intuición para hacer una pregunta...",
+              "<strong>Florecimiento:</strong> Sabes cómo cubrir tus errores...",
+              "<strong>El prestigio:</strong> Tu magia suele ser humo y espejos..."
+            ],
+            iluminacion: "Realizar un truco / Descubrir una artimaña / Buscar la magia real"
+          }
+        }
+      },
+      musculo: {
+        nombre: "MÚSCULO",
+        habilidades: [
+          "<strong>Conozco a un tipo:</strong> Una vez por misión...",
+          "<strong>Puños de hierro:</strong> Tus golpes tienen más fuerza...",
+          "<strong>Presión imparable:</strong> Puedes forzar la situación a tu favor..."
+        ],
+        subclases: {
+          explorador: {
+            nombre: "Explorador",
+            habilidades: [
+              "<strong>Vista aguda:</strong> Puedes detectar detalles a distancia...",
+              "<strong>Rastrear:</strong> Puedes seguir huellas y rastros...",
+              "<strong>Supervivencia:</strong> Te adaptas al entorno hostil..."
+            ],
+            iluminacion: "Descubrir un camino / Rastrear una amenaza / Sobrevivir lo imposible"
+          },
+          soldado: {
+            nombre: "Soldado",
+            habilidades: [
+              "<strong>Táctica de combate:</strong> Puedes coordinar ataques...",
+              "<strong>Disciplina:</strong> Eres inmune al miedo...",
+              "<strong>Entrenamiento militar:</strong> Manejas armas con precisión..."
+            ],
+            iluminacion: "Proteger a un aliado / Ganar una pelea / Seguir una orden peligrosa"
+          }
+        }
+      },
+      erudito: {
+        nombre: "ERUDITO",
+        habilidades: [
+          "<strong>Archivo mental:</strong> Puedes recordar detalles oscuros...",
+          "<strong>Analizar:</strong> Puedes deducir patrones y conexiones...",
+          "<strong>Teoría útil:</strong> Puedes aplicar conocimientos en la práctica..."
+        ],
+        subclases: {
+          doctor: {
+            nombre: "Doctor",
+            habilidades: [
+              "<strong>Curación:</strong> Puedes tratar heridas...",
+              "<strong>Diagnóstico preciso:</strong> Identificas enfermedades...",
+              "<strong>Botiquín de campo:</strong> Puedes usar equipo médico eficientemente..."
+            ],
+            iluminacion: "Salvar una vida / Hacer un diagnóstico / Aplicar un tratamiento innovador"
+          },
+          profesor: {
+            nombre: "Profesor",
+            habilidades: [
+              "<strong>Clase magistral:</strong> Puedes enseñar rápidamente...",
+              "<strong>Persuasión académica:</strong> Usas argumentos lógicos...",
+              "<strong>Teoría arcana:</strong> Puedes explicar lo inexplicable..."
+            ],
+            iluminacion: "Enseñar algo vital / Encontrar conocimiento perdido / Inspirar a otro personaje"
+          }
+        }
+      },
+      escurridizo: {
+        nombre: "ESCURRIDIZO",
+        habilidades: [
+          "<strong>Desaparecer:</strong> Puedes desaparecer rápidamente...",
+          "<strong>Silencio absoluto:</strong> Tus pasos son imperceptibles...",
+          "<strong>Movimiento ágil:</strong> Te desplazas con gran facilidad..."
+        ],
+        subclases: {
+          ladrón: {
+            nombre: "Ladrón",
+            habilidades: [
+              "<strong>Manos ligeras:</strong> Robas sin ser detectado...",
+              "<strong>Oportunista:</strong> Aprovechas el caos a tu favor...",
+              "<strong>Trucos del oficio:</strong> Tienes herramientas para abrir casi cualquier cosa..."
+            ],
+            iluminacion: "Robar algo valioso / Escapar sin ser visto / Revelar un secreto guardado"
+          },
+          espia: {
+            nombre: "Espía",
+            habilidades: [
+              "<strong>Identidad falsa:</strong> Adoptas roles convincentes...",
+              "<strong>Recoger rumores:</strong> Obtienes información útil en poco tiempo...",
+              "<strong>Red de contactos:</strong> Conoces personas en los lugares adecuados..."
+            ],
+            iluminacion: "Descubrir un complot / Obtener información clave / Ganarte la confianza de un enemigo"
+          }
+        }
+      },
+      raro: {
+        nombre: "RARO",
+        habilidades: [
+          "<strong>Sensibilidad:</strong> Percibes lo que otros no pueden...",
+          "<strong>Intuición inexplicable:</strong> Sabes cosas sin saber por qué...",
+          "<strong>Toque extraño:</strong> Puedes alterar la realidad con tu presencia..."
+        ],
+        subclases: {
+          vidente: {
+            nombre: "Vidente",
+            habilidades: [
+              "<strong>Premonición:</strong> Intuyes el peligro antes de que ocurra...",
+              "<strong>Lectura de auras:</strong> Ves las emociones de los demás...",
+              "<strong>Visión del más allá:</strong> Percibes espíritus o entidades ocultas..."
+            ],
+            iluminacion: "Tener una visión útil / Contactar con lo oculto / Advertir de un peligro inminente"
+          },
+          mutante: {
+            nombre: "Mutante",
+            habilidades: [
+              "<strong>Alteración corporal:</strong> Puedes cambiar partes de tu cuerpo...",
+              "<strong>Regeneración:</strong> Sanas de forma acelerada...",
+              "<strong>Sentidos agudizados:</strong> Ves, oyes o hueles mucho mejor que un humano común..."
+            ],
+            iluminacion: "Usar una mutación con éxito / Ser aceptado pese a tu diferencia / Aprender sobre tu origen"
+          }
+        }
+      }
+    };
+
+    const equipamientoLista = [
+      "Frasco de contención de Sangrado", "Arma de mano", "Detector de Sangrado", "Atomizador", "Equipo de primeros auxilios",
+      "Binoculares", "Guia de la ciudad", "Brujula", "Palanca", "Dictafono", "Kit de camuflaje", "Reloj de Bolsillo",
+      "Material inflamable", "Linterna", "Silex y acero", "Linterna de gas", "Sabueso leal", "Mechero", "Lupa",
+      "Mapa", "Tarjeta de Membresia", "Camara de video", "Hilo y aguja", "Candado y llave", "Microscopio de bolsillo",
+      "Herramientas de precision", "Cuerda", "Cizalla", "Silvato", "Mas objetos especiales - Pagina 190 del libro (CONSULTAR GM)"
+    ];
+
+    // Inicialización al cargar la página
+    document.addEventListener('DOMContentLoaded', function() {
+      const contenedor = document.getElementById("equipamiento");
+      equipamientoLista.forEach(item => {
+        const label = document.createElement("label");
+        label.className = "flex items-center space-x-2";
+        label.innerHTML = `<input type="checkbox" value="${item}" onchange="updateEquipamiento(event)"> ${item}`;
+        contenedor.appendChild(label);
+      });
+
+      // Configurar evento para el selector de rol
+      document.getElementById("rol").addEventListener("change", function() {
+        const clase = this.value;
+        const datos = clases[clase];
+        const contenido = document.getElementById("contenido-clases");
+
+        if (!datos) return;
+
+        let html = `<h3 class="text-lg font-bold mb-2">${datos.nombre}</h3>`;
+        html += `<p class="mb-4">Tus habilidades principales son:</p><ul class="list-disc pl-5 mb-4">`;
+        datos.habilidades.forEach(h => html += `<li>${h}</li>`);
+        html += `</ul>`;
+        html += `<label for="subclase-select" class="block font-semibold mt-4">Subclase:</label>`;
+        html += `<select id="subclase-select" class="w-full p-2 border rounded" onchange="updateSubclasePreview()">`;
+        Object.keys(datos.subclases).forEach(s => {
+          html += `<option value="${s}">${datos.subclases[s].nombre}</option>`;
+        });
+        html += `</select>`;
+        html += `<div id="subclase-contenido" class="mt-4"></div>`;
+
+        contenido.innerHTML = html;
+
+        document.getElementById("subclase-select").addEventListener("change", function() {
+          mostrarSubclase(clase, this.value);
+        });
+
+        const primera = Object.keys(datos.subclases)[0];
+        mostrarSubclase(clase, primera);
+        updateSubclasePreview();
+      });
+    });
+
+    function mostrarSubclase(claveClase, claveSubclase) {
+      const sub = clases[claveClase].subclases[claveSubclase];
+      let html = `<h4 class="font-bold mt-2">${sub.nombre}</h4><ul class="list-disc pl-5">`;
+      sub.habilidades.forEach(h => html += `<li>${h}</li>`);
+      html += `</ul><p class="mt-2"><strong>Claves de Iluminación:</strong> ${sub.iluminacion}</p>`;
+      document.getElementById("subclase-contenido").innerHTML = html;
+    }
+
+    function updatePreview() {
+      document.getElementById('preview-nombre').textContent = document.getElementById('nombre').value;
+      document.getElementById('preview-circulo').textContent = document.getElementById('circulo').value;
+      document.getElementById('preview-estilo').textContent = document.getElementById('estilo').value;
+      document.getElementById('preview-catalizador').textContent = document.getElementById('catalizador').value;
+      document.getElementById('preview-cuestion').textContent = document.getElementById('cuestion').value;
+      document.getElementById('preview-rol').textContent = document.getElementById('rol').options[document.getElementById('rol').selectedIndex].text;
+      updateSubclasePreview();
+    }
+
+    function updateSubclasePreview() {
+      const rolSelect = document.getElementById('rol');
+      const subclaseSelect = document.getElementById('subclase-select');
+      
+      if (rolSelect.value && subclaseSelect) {
+        document.getElementById('preview-subclase').textContent = subclaseSelect.options[subclaseSelect.selectedIndex].text;
+      } else {
+        document.getElementById('preview-subclase').textContent = '';
+      }
+    }
+
+    function updateEquipamiento(event) {
+      const checkboxes = document.querySelectorAll('#equipamiento input[type="checkbox"]');
+      const selected = Array.from(checkboxes).filter(cb => cb.checked);
+      if (selected.length > 6) {
+        alert('Solo puedes seleccionar hasta 6 objetos.');
+        event.target.checked = false;
+        return;
+      }
+      document.getElementById('preview-equipamiento').textContent = selected.map(cb => cb.value).join(', ');
+    }
+
+    function mostrarDetallesRol() {
+      const rol = document.getElementById('rol').value;
+      const detalles = document.getElementById('detalle-rol');
+      if (rol !== "") {
+        detalles.classList.remove("hidden");
+      } else {
+        detalles.classList.add("hidden");
+      }
+    }
+
+    function validarFormulario(event) {
+      const obligatorios = ['nombre', 'circulo', 'estilo', 'catalizador', 'cuestion', 'rol'];
+      for (let id of obligatorios) {
+        const campo = document.getElementById(id);
+        if (!campo.value.trim()) {
+          alert('Por favor, completa todos los campos obligatorios.');
+          campo.focus();
+          event.preventDefault();
+          return false;
+        }
+      }
+      
+      // Verificar que se haya seleccionado una subclase
+      const rol = document.getElementById('rol').value;
+      if (rol && !document.getElementById('subclase-select')) {
+        alert('Por favor, selecciona una subclase para tu rol.');
+        event.preventDefault();
+        return false;
+      }
+      
+      return true;
+    }
+  </script>
+</body>
+</html>
